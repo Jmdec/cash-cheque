@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Eye, Trash2, ArrowUpDown, Ban, AlertTriangle, Plus, Edit, Download } from "lucide-react"
+import { Eye, Trash2, ArrowUpDown, Ban, AlertTriangle, Plus, Edit, Download, ChevronLeft, ChevronRight } from "lucide-react"
 import LoadingWrapper from "@/components/loading-wrapper"
 import { DataTable } from "@/components/ui/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -103,21 +103,34 @@ export default function ChequeVoucherPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
   const previewRef = React.createRef<HTMLDivElement>()
+  const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
 
   const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const fetchVouchers = async (page = 1, search = "") => {
+    if (cachedPages[page] && !search) {
+      setVouchers(cachedPages[page])
+      setPagination((prev) => ({
+        current_page: page,
+        per_page: prev?.per_page ?? 10,
+        total: prev?.total ?? 0,
+        last_page: prev?.last_page ?? 1,
+        from: prev?.from ?? 0,
+        to: prev?.to ?? 0,
+      }))
+
+      return
+    }
+
     try {
       setIsLoading(true)
       const url = `/api/cheque-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(search)}`
-      console.log("Fetching vouchers with URL:", url) // Log the URL being requested
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error("Failed to fetch cheque vouchers")
       }
       const data: PaginatedResponse = await response.json()
-      console.log("Received data for page", page, ":", data.data) // Log the data received
       if (!data.data || !Array.isArray(data.data)) {
         throw new Error("Invalid data format: Expected paginated response with data array")
       }
@@ -130,6 +143,8 @@ export default function ChequeVoucherPage() {
         from: data.from,
         to: data.to,
       })
+
+      setCachedPages((prev) => ({ ...prev, [page]: data.data }))
     } catch (error: any) {
       console.error("Error fetching cheque vouchers:", error)
       toast({
@@ -143,6 +158,28 @@ export default function ChequeVoucherPage() {
   }
 
   useEffect(() => {
+    // Check if sessionStorage has saved state
+    const savedState = sessionStorage.getItem("cashVoucherTableState")
+    if (savedState) {
+      const { currentPage, globalSearchQuery, selectedVoucherId } = JSON.parse(savedState)
+      setCurrentPage(currentPage)
+      setGlobalSearchQuery(globalSearchQuery)
+
+      // Fetch vouchers and select the previously clicked row
+      fetchVouchers(currentPage, globalSearchQuery).then(() => {
+        const row = vouchers.find((v) => v.id === selectedVoucherId)
+        if (row) setSelectedVoucher(row)
+      })
+
+      // Clear sessionStorage after restoring state, so refresh goes back to page 1
+      sessionStorage.removeItem("cashVoucherTableState")
+    } else {
+      // No saved state: normal first page
+      fetchVouchers(1, "")
+    }
+  }, [])
+
+  useEffect(() => {
     const handler = setTimeout(() => {
       fetchVouchers(currentPage, globalSearchQuery)
     }, 300) // 300ms debounce
@@ -151,11 +188,24 @@ export default function ChequeVoucherPage() {
     }
   }, [currentPage, globalSearchQuery])
 
+   const saveTableState = () => {
+    sessionStorage.setItem(
+      "cashVoucherTableState",
+      JSON.stringify({
+        currentPage,
+        globalSearchQuery,
+        selectedVoucherId: selectedVoucher?.id,
+      }),
+    )
+  }
+
   const handleView = (id: string) => {
+    saveTableState()
     router.push(`/admin/cheque/view/${id}`)
   }
 
   const handleEdit = (id: string) => {
+    saveTableState()
     router.push(`/admin/cheque/edit/${id}`)
   }
 
@@ -551,16 +601,12 @@ export default function ChequeVoucherPage() {
             <Button variant="outline" size="sm" onClick={() => handleView(voucher.id)} className="relative group h-8 w-8 p-0">
               <Eye className="h-4 w-4 text-blue-600" />
               <span className="sr-only">View</span>
-              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
-                View
-              </span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">View</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleEdit(voucher.id)} className="relative group h-8 w-8 p-0 bg-transparent">
               <Edit className="h-4 w-4 text-green-600" />
               <span className="sr-only">Edit</span>
-              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
-                Edit
-              </span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">Edit</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -568,8 +614,8 @@ export default function ChequeVoucherPage() {
                   <Ban className="h-4 w-4 text-orange-600" />
                   <span className="sr-only">Cancel</span>
                   <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
-                Cancel
-              </span>
+                    Cancel
+                  </span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="w-[95vw] max-w-md mx-auto">
@@ -595,9 +641,7 @@ export default function ChequeVoucherPage() {
             <Button variant="outline" size="sm" onClick={() => handleDeleteClick(voucher)} className="relative group h-8 w-8 p-0 bg-transparent">
               <Trash2 className="h-4 w-4 text-red-600" />
               <span className="sr-only">Delete</span>
-              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
-                Delete
-              </span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">Delete</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => exportVoucher(voucher)} disabled={isExporting} className="relative group h-8 w-8 p-0">
               <Download className="h-4 w-4" />
@@ -679,6 +723,69 @@ export default function ChequeVoucherPage() {
               fromRow={pagination?.from || 0}
               toRow={pagination?.to || 0}
             />
+            {/* Pagination - Responsive for all screen sizes */}
+            {pagination && pagination.last_page > 1 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-4 sm:mt-6 p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                  <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+                    Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                  </div>
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePreviousPage} // Use handlePreviousPage
+                      disabled={currentPage <= 1}
+                      className="h-8 sm:h-9 px-2 sm:px-3 bg-transparent"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-0 sm:mr-1" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </Button>
+                    {/* Responsive pagination numbers */}
+                    <div className="hidden xs:flex items-center space-x-1">
+                      {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                        // Show pages around current page
+                        let pageNum
+                        if (pagination.last_page <= 5) {
+                          pageNum = i + 1
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1
+                        } else if (currentPage >= pagination.last_page - 2) {
+                          pageNum = pagination.last_page - 4 + i
+                        } else {
+                          pageNum = currentPage - 2 + i
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(pageNum)}
+                            className="w-8 h-8 sm:w-9 sm:h-9 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                    {/* Mobile page indicator */}
+                    <div className="xs:hidden text-xs sm:text-sm text-gray-600 px-2">
+                      Page {currentPage} / {pagination.last_page}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage} // Use handleNextPage
+                      disabled={currentPage >= pagination.last_page}
+                      className="h-8 sm:h-9 px-2 sm:px-3"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-4 w-4 ml-0 sm:ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
         {/* OTP Dialog */}
