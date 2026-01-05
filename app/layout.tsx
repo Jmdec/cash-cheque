@@ -1,45 +1,31 @@
-import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import InstallPrompt from "@/components/install-prompt"; // ⬅️ new client component
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import ClientLayout from "./ClientLayout"
+import { AuthProvider } from "@/context/auth-context"
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const viewport: Viewport = {
-  themeColor: "#ffffff",
-};
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ABIC Realty Accounting System",
-  description: "Professional accounting management system",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/icon512_maskable.png",
-    apple: "/icon512_rounded.png",
-  },
-};
+  description: "Accounting System",
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-          <InstallPrompt /> {/* 👈 Floating button injected here */}
-        </ThemeProvider>
+    <html lang="en">
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body className="font-sans antialiased">
+        <AuthProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </AuthProvider>
       </body>
     </html>
-  );
+  )
 }

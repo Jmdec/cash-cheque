@@ -5,6 +5,7 @@ import unusedImports from "eslint-plugin-unused-imports";
 import _import from "eslint-plugin-import";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import jsxA11Y from "eslint-plugin-jsx-a11y";
+import prettier from "eslint-plugin-prettier";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import path from "node:path";
@@ -14,15 +15,13 @@ import { FlatCompat } from "@eslint/eslintrc";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all
 });
 
-export default defineConfig([
-  // Ignore patterns globally
-  globalIgnores([
+export default defineConfig([globalIgnores([
     ".now/*",
     "**/*.css",
     "**/.changeset",
@@ -43,115 +42,110 @@ export default defineConfig([
     "!**/plopfile.js",
     "!**/react-shim.js",
     "!**/tsup.config.ts",
-  ]),
+]), {
+    extends: fixupConfigRules(compat.extends(
+        "plugin:react/recommended",
+        "plugin:prettier/recommended",
+        "plugin:react-hooks/recommended",
+        "plugin:jsx-a11y/recommended",
+        "plugin:@next/next/recommended",
+    )),
 
-  // Base configs using compat
-  ...compat.config({
-    extends: [
-      "eslint:recommended",
-      "plugin:react/recommended",
-      "plugin:react-hooks/recommended",
-      "plugin:jsx-a11y/recommended",
-      "plugin:@next/next/recommended",
-    ],
-  }),
-
-  {
-    files: ["**/*.ts", "**/*.tsx"],
+    plugins: {
+        react: fixupPluginRules(react),
+        "unused-imports": unusedImports,
+        import: fixupPluginRules(_import),
+        "@typescript-eslint": typescriptEslint,
+        "jsx-a11y": fixupPluginRules(jsxA11Y),
+        prettier: fixupPluginRules(prettier),
+    },
 
     languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: "module",
-        ecmaFeatures: {
-          jsx: true,
+        globals: {
+            ...Object.fromEntries(Object.entries(globals.browser).map(([key]) => [key, "off"])),
+            ...globals.node,
         },
-      },
-      globals: {
-        ...globals.node,
-        ...Object.fromEntries(
-          Object.entries(globals.browser).map(([key]) => [key, "off"])
-        ),
-      },
+
+        parser: tsParser,
+        ecmaVersion: 12,
+        sourceType: "module",
+
+        parserOptions: {
+            ecmaFeatures: {
+                jsx: true,
+            },
+        },
     },
 
     settings: {
-      react: {
-        version: "detect",
-      },
+        react: {
+            version: "detect",
+        },
     },
 
-    plugins: {
-      "unused-imports": unusedImports,
-      import: fixupPluginRules(_import),
-      "@typescript-eslint": fixupPluginRules(typescriptEslint),
-    },
+    files: ["**/*.ts", "**/*.tsx"],
 
     rules: {
-      "no-console": "warn",
-      "react/prop-types": "off",
-      "react/jsx-uses-react": "off",
-      "react/react-in-jsx-scope": "off",
-      "react-hooks/exhaustive-deps": "off",
-      "jsx-a11y/click-events-have-key-events": "warn",
-      "jsx-a11y/interactive-supports-focus": "warn",
+        "no-console": "warn",
+        "react/prop-types": "off",
+        "react/jsx-uses-react": "off",
+        "react/react-in-jsx-scope": "off",
+        "react-hooks/exhaustive-deps": "off",
+        "jsx-a11y/click-events-have-key-events": "warn",
+        "jsx-a11y/interactive-supports-focus": "warn",
+        "prettier/prettier": "warn",
+        "no-unused-vars": "off",
+        "unused-imports/no-unused-vars": "off",
+        "unused-imports/no-unused-imports": "warn",
 
-      "no-unused-vars": "off",
-      "unused-imports/no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "warn",
+        "@typescript-eslint/no-unused-vars": ["warn", {
+            args: "after-used",
+            ignoreRestSiblings: false,
+            argsIgnorePattern: "^_.*?$",
+        }],
 
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          args: "after-used",
-          ignoreRestSiblings: false,
-          argsIgnorePattern: "^_.*?$",
-        },
-      ],
+        "import/order": ["warn", {
+            groups: [
+                "type",
+                "builtin",
+                "object",
+                "external",
+                "internal",
+                "parent",
+                "sibling",
+                "index",
+            ],
 
-      "import/order": [
-        "warn",
-        {
-          groups: [
-            "type",
-            "builtin",
-            "object",
-            "external",
-            "internal",
-            "parent",
-            "sibling",
-            "index",
-          ],
-          pathGroups: [
-            {
-              pattern: "~/**",
-              group: "external",
-              position: "after",
-            },
-          ],
-          "newlines-between": "always",
-        },
-      ],
+            pathGroups: [{
+                pattern: "~/**",
+                group: "external",
+                position: "after",
+            }],
 
-      "react/self-closing-comp": "warn",
+            "newlines-between": "always",
+        }],
 
-      "react/jsx-sort-props": [
-        "warn",
-        {
-          callbacksLast: true,
-          shorthandFirst: true,
-          noSortAlphabetically: false,
-          reservedFirst: true,
-        },
-      ],
+        "react/self-closing-comp": "warn",
 
-      "padding-line-between-statements": [
-        "warn",
-        { blankLine: "always", prev: "*", next: "return" },
-        { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
-        { blankLine: "any", prev: ["const", "let", "var"], next: ["const", "let", "var"] },
-      ],
+        "react/jsx-sort-props": ["warn", {
+            callbacksLast: true,
+            shorthandFirst: true,
+            noSortAlphabetically: false,
+            reservedFirst: true,
+        }],
+
+        "padding-line-between-statements": ["warn", {
+            blankLine: "always",
+            prev: "*",
+            next: "return",
+        }, {
+            blankLine: "always",
+            prev: ["const", "let", "var"],
+            next: "*",
+        }, {
+            blankLine: "any",
+            prev: ["const", "let", "var"],
+            next: ["const", "let", "var"],
+        }],
     },
-  },
-]);
+}]);

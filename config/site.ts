@@ -1,29 +1,39 @@
-export type SiteConfig = typeof siteConfig;
-
 export const siteConfig = {
-  name: "Next.js + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
-  navItems: [
+  name: "ABIC Realty Accounting System",
+  description: "Beautifully designed components built with Radix UI and Tailwind CSS.",
+  mainNav: [
     {
-      label: "Home",
+      title: "Home",
       href: "/",
     },
+  ],
+  links: {
+    twitter: "https://twitter.com/shadcn",
+    github: "https://github.com/shadcn/ui",
+    docs: "https://ui.shadcn.com",
+  },
+  navItems: [
     {
-      label: "Docs",
-      href: "/docs",
+      label: "Dashboard",
+      href: "/dashboard",
     },
     {
-      label: "Pricing",
-      href: "/pricing",
+      label: "Cash Voucher",
+      href: "/cash-voucher",
     },
     {
-      label: "Blog",
-      href: "/blog",
+      label: "Cheque Voucher",
+      href: "/cheque-voucher",
     },
     {
-      label: "About",
-      href: "/about",
+      label: "Admin Cash Vouchers",
+      href: "/admin/cashvoucher",
     },
+    {
+      label: "Admin Cheque Vouchers",
+      href: "/admin/cheque",
+    },
+    
   ],
   navMenuItems: [
     {
@@ -35,35 +45,29 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
-      label: "Projects",
-      href: "/projects",
+      label: "Cash Voucher",
+      href: "/cashvoucher",
     },
     {
-      label: "Team",
-      href: "/team",
+      label: "Cheque Voucher",
+      href: "/chequevoucher",
     },
     {
-      label: "Calendar",
-      href: "/calendar",
+      label: "Admin Cash Vouchers",
+      href: "/admin/cashvoucher",
     },
+    {
+      label: "Admin Cheque Vouchers",
+      href: "/admin/cheque",
+    },
+   
     {
       label: "Settings",
       href: "/settings",
-    },
-    {
-      label: "Help & Feedback",
-      href: "/help-feedback",
     },
     {
       label: "Logout",
       href: "/logout",
     },
   ],
-  links: {
-    github: "https://github.com/heroui-inc/heroui",
-    twitter: "https://twitter.com/hero_ui",
-    docs: "https://heroui.com",
-    discord: "https://discord.gg/9b6yyZKmH4",
-    sponsor: "https://patreon.com/jrgarciadev",
-  },
-};
+}
