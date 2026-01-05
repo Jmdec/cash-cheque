@@ -23,7 +23,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { OTPDialog } from "@/components/ui/otp-dialog"
 import { Input } from "@/components/ui/input"
-import { CashVoucher as VoucherCashPreview, VoucherPreview } from "@/components/voucher-preview"
+import { CashVoucher as VoucherCashPreview, CashVoucherPreview } from "@/components/cash-voucher-preview"
 import domtoimage from "dom-to-image"
 import React from "react"
 
@@ -275,7 +275,7 @@ export default function CashVoucherPage() {
       // Render voucher preview
       const root = createRoot(div)
       root.render(
-        <VoucherPreview
+        <CashVoucherPreview
           ref={previewRef}
           voucher={selectedExportVoucher!}
           getSignatureUrl={getSignatureUrl}
@@ -651,7 +651,7 @@ export default function CashVoucherPage() {
         {/* Hidden VoucherPreview for export */}
         <div id="voucher-export-container" />
         {selectedExportVoucher && (
-          <VoucherPreview
+          <CashVoucherPreview
             ref={previewRef}
             voucher={selectedExportVoucher!}
             getSignatureUrl={getSignatureUrl}

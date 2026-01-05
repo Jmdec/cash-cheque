@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import domtoimage from "dom-to-image"
 import { Download } from "lucide-react"
-import { VoucherPreview } from "@/components/voucher-preview"
+import { CashVoucherPreview } from "@/components/cash-voucher-preview"
 
 interface Particular {
   id: string
@@ -220,7 +220,7 @@ export default function CashVoucherViewPage() {
       {/* Full Width Preview Section */}
       <Card className="w-full border rounded-lg bg-white shadow-sm">
         <div ref={previewRef}>
-          <VoucherPreview
+          <CashVoucherPreview
             voucher={voucher}
             getSignatureUrl={getSignatureUrl}
             handleImageError={handleImageError}

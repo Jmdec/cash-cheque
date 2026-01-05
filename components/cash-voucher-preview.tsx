@@ -35,7 +35,7 @@ interface VoucherPreviewProps {
   formatDateForPreview: (date: string) => string
 }
 
-export const VoucherPreview = forwardRef<HTMLDivElement, VoucherPreviewProps>(
+export const CashVoucherPreview = forwardRef<HTMLDivElement, VoucherPreviewProps>(
   ({ voucher, getSignatureUrl, handleImageError, formatDate, formatDateForPreview }, ref) => {
     return (
       <div
