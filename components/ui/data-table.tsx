@@ -273,69 +273,6 @@ export function DataTable<TData, TValue>({
           </Table>
         </div>
       </div>
-      {/* Pagination Info */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-          <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-            {table.getFilteredSelectedRowModel().rows.length} selected of {totalRows} total rows
-            {hiddenColumnsCount > 0 && (
-              <span className="hidden sm:inline"> • {hiddenColumnsCount} column(s) hidden</span>
-            )}
-          </div>
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onPreviousPage}
-              disabled={currentPage <= 1}
-              className="h-8 sm:h-9 px-2 sm:px-3 bg-transparent"
-            >
-              <ChevronLeft className="h-4 w-4 mr-0 sm:mr-1" />
-              <span className="hidden sm:inline">Previous</span>
-            </Button>
-            {/* Responsive pagination numbers */}
-            <div className="hidden xs:flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, pageCount) }, (_, i) => {
-                let pageNum
-                if (pageCount <= 5) {
-                  pageNum = i + 1
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1
-                } else if (currentPage >= pageCount - 2) {
-                  pageNum = pageCount - 4 + i
-                } else {
-                  pageNum = currentPage - 2 + i
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onPageChange(pageNum)}
-                    className="w-8 h-8 sm:w-9 sm:h-9 p-0"
-                  >
-                    {pageNum}
-                  </Button>
-                )
-              })}
-            </div>
-            {/* Mobile page indicator */}
-            <div className="xs:hidden text-xs sm:text-sm text-gray-600 px-2">
-              Page {currentPage} / {pageCount}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onNextPage}
-              disabled={currentPage >= pageCount}
-              className="h-8 sm:h-9 px-2 sm:px-3 bg-transparent"
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ChevronRight className="h-4 w-4 ml-0 sm:ml-1" />
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
