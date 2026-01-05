@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Download, Upload, X, Save, ChevronUp, ChevronDown } from "lucide-react"
 import domtoimage from "dom-to-image"
 import { useToast } from "@/hooks/use-toast"
+import AutocompleteInput from "@/components/autocomplete-input"
 
 const formatDate = (dateString: string) => {
   if (!dateString) return ""
@@ -240,7 +241,6 @@ export default function CashVoucher() {
           title: "Success",
           description: "Voucher saved successfully!",
         })
-        console.log("Voucher saved:", result)
 
         // Clean up any existing blob URLs before clearing
         if (receivedBy.signatureUrl && receivedBy.signatureUrl.startsWith("blob:")) {
@@ -352,11 +352,12 @@ export default function CashVoucher() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="paidTo">Paid To</Label>
-                <Input
-                  id="paidTo"
-                  placeholder="Enter payee name"
+                <AutocompleteInput
                   value={formData.paidTo}
-                  onChange={(e) => setFormData({ ...formData, paidTo: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, paidTo: val })}
+                  type="paid_to"
+                  voucher="cash"
+                  placeholder="Enter payee name"
                 />
               </div>
               <div className="space-y-2">
@@ -379,11 +380,12 @@ export default function CashVoucher() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="ownerClient">Owner/Client</Label>
-              <Input
-                id="ownerClient"
-                placeholder="Enter owner/client name"
+              <AutocompleteInput
                 value={formData.ownerClient}
-                onChange={(e) => setFormData({ ...formData, ownerClient: e.target.value })}
+                onChange={(val) => setFormData({ ...formData, ownerClient: val })}
+                type="owner_client"
+                voucher="cash"
+                placeholder="Enter owner/client name"
               />
             </div>
             <Separator />

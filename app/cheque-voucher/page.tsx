@@ -10,6 +10,7 @@ import { Download, Upload, X, Save, ChevronUp, ChevronDown } from "lucide-react"
 import domtoimage from "dom-to-image"
 import { useToast } from "@/hooks/use-toast"
 import { Textarea } from "@/components/ui/textarea"
+import AutocompleteInput from "@/components/autocomplete-input"
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -356,11 +357,12 @@ export default function ChequeVoucher() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="paidTo">Paid To</Label>
-                <Input
-                  id="paidTo"
-                  placeholder="Enter payee name"
+                <AutocompleteInput
                   value={formData.paidTo}
-                  onChange={(e) => setFormData({ ...formData, paidTo: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, paidTo: val })}
+                  type="paid_to"
+                  voucher="cheque"
+                  placeholder="Enter payee name"
                 />
               </div>
               <div className="space-y-2">
@@ -474,11 +476,12 @@ export default function ChequeVoucher() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ownerClient">Owner/Client</Label>
-                  <Input
-                    id="ownerClient"
-                    placeholder="Enter owner/client name"
+                  <AutocompleteInput
                     value={formData.ownerClient}
-                    onChange={(e) => setFormData({ ...formData, ownerClient: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, ownerClient: val })}
+                    type="owner_client"
+                    voucher="cheque"
+                    placeholder="Enter owner/client name"
                   />
                 </div>
               </div>
