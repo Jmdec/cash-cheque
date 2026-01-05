@@ -74,21 +74,35 @@ export default function CashVoucherPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
   const previewRef = React.createRef<HTMLDivElement>()
+  const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
 
   const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const fetchVouchers = async (page = 1, search = "") => {
+    // Return cached page if exists and search query hasn't changed
+    if (cachedPages[page] && !search) {
+      setVouchers(cachedPages[page])
+      setPagination((prev) => ({
+        current_page: page,
+        per_page: prev?.per_page ?? 10,
+        total: prev?.total ?? 0,
+        last_page: prev?.last_page ?? 1,
+        from: prev?.from ?? 0,
+        to: prev?.to ?? 0,
+      }))
+
+      return
+    }
+
     try {
       setIsLoading(true)
       const response = await fetch(`/api/cash-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(search)}`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch cash vouchers")
-      }
+      if (!response.ok) throw new Error("Failed to fetch cash vouchers")
+
       const data: PaginatedResponse = await response.json()
-      if (!data.data || !Array.isArray(data.data)) {
-        throw new Error("Invalid data format: Expected paginated response with data array")
-      }
+      if (!data.data || !Array.isArray(data.data)) throw new Error("Invalid data format")
+
       setVouchers(data.data)
       setPagination({
         current_page: data.current_page,
@@ -98,7 +112,9 @@ export default function CashVoucherPage() {
         from: data.from,
         to: data.to,
       })
-      // Do NOT set currentPage from API response here, it's managed by client state
+
+      // Save to cache
+      setCachedPages((prev) => ({ ...prev, [page]: data.data }))
     } catch (error: any) {
       console.error("Error fetching cash vouchers:", error)
       toast({
@@ -112,19 +128,53 @@ export default function CashVoucherPage() {
   }
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchVouchers(currentPage, globalSearchQuery)
-    }, 300) // 300ms debounce for search
-    return () => {
-      clearTimeout(handler)
+    // Check if sessionStorage has saved state
+    const savedState = sessionStorage.getItem("cashVoucherTableState")
+    if (savedState) {
+      const { currentPage, globalSearchQuery, selectedVoucherId } = JSON.parse(savedState)
+      setCurrentPage(currentPage)
+      setGlobalSearchQuery(globalSearchQuery)
+
+      // Fetch vouchers and select the previously clicked row
+      fetchVouchers(currentPage, globalSearchQuery).then(() => {
+        const row = vouchers.find((v) => v.id === selectedVoucherId)
+        if (row) setSelectedVoucher(row)
+      })
+
+      // Clear sessionStorage after restoring state, so refresh goes back to page 1
+      sessionStorage.removeItem("cashVoucherTableState")
+    } else {
+      // No saved state: normal first page
+      fetchVouchers(1, "")
     }
-  }, [currentPage, globalSearchQuery]) // Depend on currentPage and globalSearchQuery
+  }, [])
+
+  // Search debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchVouchers(1, globalSearchQuery) // always start from page 1 on search
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [globalSearchQuery])
+
+  const saveTableState = () => {
+    sessionStorage.setItem(
+      "cashVoucherTableState",
+      JSON.stringify({
+        currentPage,
+        globalSearchQuery,
+        selectedVoucherId: selectedVoucher?.id,
+      }),
+    )
+  }
 
   const handleView = (id: string) => {
+    saveTableState()
     router.push(`/admin/cashvoucher/view/${id}`)
   }
 
   const handleEdit = (id: string) => {
+    saveTableState()
     router.push(`/admin/cashvoucher/edit/${id}`)
   }
 
@@ -261,6 +311,7 @@ export default function CashVoucherPage() {
 
   // Handle export voucher to png
   const exportVoucher = async (voucher: CashVoucher) => {
+    saveTableState()
     fetchSelectedVoucher(voucher.id)
     try {
       setIsExporting(true)
