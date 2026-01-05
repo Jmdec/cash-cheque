@@ -25,20 +25,7 @@ const formatDateForPreview = (dateString: string) => {
   if (!dateString) return ""
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return "" // Handle invalid date strings
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
   const day = date.getDate()
   const month = months[date.getMonth()]
   const year = date.getFullYear()
@@ -68,18 +55,18 @@ export default function CashVoucher() {
   })
 
   const [receivedBy, setReceivedBy] = useState({
-  name: "MARIA KRISSA CHAREZ R. BONGON",
-  signature: null as File | null,
-  signatureUrl: "",
-  date: "",
-})
+    name: "MARIA KRISSA CHAREZ R. BONGON",
+    signature: null as File | null,
+    signatureUrl: "/signatures/MARIA-KRISSA-CHAREZ.png",
+    date: "",
+  })
 
-const [approvedBy, setApprovedBy] = useState({
-  name: "ANGELLE S. SARMIENTO",
-  signature: null as File | null,
-  signatureUrl: "",
-  date: "",
-})
+  const [approvedBy, setApprovedBy] = useState({
+    name: "ANGELLE S. SARMIENTO",
+    signature: null as File | null,
+    signatureUrl: "/signatures/ANGELLE.png",
+    date: "",
+  })
 
   const previewRef = useRef<HTMLDivElement>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -132,6 +119,15 @@ const [approvedBy, setApprovedBy] = useState({
     } else {
       setApprovedBy({ ...approvedBy, signature: file, signatureUrl: url })
     }
+  }
+
+  const urlToFile = async (url: string, filename: string): Promise<File> => {
+    const response = await fetch(url)
+    const blob = await response.blob()
+
+    return new File([blob], filename, {
+      type: blob.type || "image/png",
+    })
   }
 
   const removeSignature = (type: "received" | "approved") => {
@@ -218,12 +214,18 @@ const [approvedBy, setApprovedBy] = useState({
       payload.append("receivedBy[name]", receivedBy.name)
       if (receivedBy.signature) {
         payload.append("receivedBy[signature]", receivedBy.signature)
+      } else {
+        const file = await urlToFile(receivedBy.signatureUrl || "/signatures/MARIA-KRISSA-CHAREZ.png", "received-by-signature.png")
+        payload.append("receivedBy[signature]", file)
       }
       payload.append("receivedBy[date]", receivedBy.date)
 
       payload.append("approvedBy[name]", approvedBy.name)
       if (approvedBy.signature) {
         payload.append("approvedBy[signature]", approvedBy.signature)
+      } else {
+        const file = await urlToFile(approvedBy.signatureUrl || "/signatures/ANGELLE.png", "approved-by-signature.png")
+        payload.append("approvedBy[signature]", file)
       }
       payload.append("approvedBy[date]", approvedBy.date)
 
@@ -264,14 +266,14 @@ const [approvedBy, setApprovedBy] = useState({
         setReceivedBy({
           name: "MARIA KRISSA R. BONGON",
           signature: null,
-          signatureUrl: "",
+          signatureUrl: "/signatures/MARIA-KRISSA-CHAREZ.png",
           date: "",
         })
         // Reset approvedBy completely
         setApprovedBy({
           name: "ANGELLE S. SARMIENTO",
           signature: null,
-          signatureUrl: "",
+          signatureUrl: "/signatures/ANGELLE.png",
           date: "",
         })
 
@@ -330,12 +332,7 @@ const [approvedBy, setApprovedBy] = useState({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-slate-900">Voucher Details</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFormCollapsed(!isFormCollapsed)}
-              className="flex items-center gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsFormCollapsed(!isFormCollapsed)} className="flex items-center gap-2">
               {isFormCollapsed ? (
                 <>
                   <ChevronDown className="w-4 h-4" />
@@ -368,12 +365,7 @@ const [approvedBy, setApprovedBy] = useState({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
+                <Input id="date" type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="projectDetails">Project Details</Label>
@@ -457,12 +449,7 @@ const [approvedBy, setApprovedBy] = useState({
                           className="max-h-20 mx-auto"
                           crossOrigin="anonymous"
                         />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1"
-                          onClick={() => removeSignature("received")}
-                        >
+                        <Button variant="destructive" size="sm" className="absolute top-1 right-1" onClick={() => removeSignature("received")}>
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
@@ -488,11 +475,7 @@ const [approvedBy, setApprovedBy] = useState({
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={receivedBy.date}
-                    onChange={(e) => setReceivedBy({ ...receivedBy, date: e.target.value })}
-                  />
+                  <Input type="date" value={receivedBy.date} onChange={(e) => setReceivedBy({ ...receivedBy, date: e.target.value })} />
                 </div>
               </div>
               <div className="space-y-4">
@@ -516,12 +499,7 @@ const [approvedBy, setApprovedBy] = useState({
                           className="max-h-20 mx-auto"
                           crossOrigin="anonymous"
                         />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1"
-                          onClick={() => removeSignature("approved")}
-                        >
+                        <Button variant="destructive" size="sm" className="absolute top-1 right-1" onClick={() => removeSignature("approved")}>
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
@@ -547,11 +525,7 @@ const [approvedBy, setApprovedBy] = useState({
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={approvedBy.date}
-                    onChange={(e) => setApprovedBy({ ...approvedBy, date: e.target.value })}
-                  />
+                  <Input type="date" value={approvedBy.date} onChange={(e) => setApprovedBy({ ...approvedBy, date: e.target.value })} />
                 </div>
               </div>
             </div>
@@ -586,12 +560,7 @@ const [approvedBy, setApprovedBy] = useState({
         >
           <div className="flex items-start justify-between mb-6">
             <div className="flex-shrink-0">
-              <img
-                src={formData.logo || "/placeholder.svg"}
-                alt="Company Logo"
-                className="max-h-[180px] max-w-[320px]"
-                crossOrigin="anonymous"
-              />
+              <img src={formData.logo || "/placeholder.svg"} alt="Company Logo" className="max-h-[180px] max-w-[320px]" crossOrigin="anonymous" />
             </div>
             <div className="text-center flex-grow">
               <h2 className="text-5xl font-bold underline mr-60">CASH VOUCHER</h2>
@@ -641,9 +610,7 @@ const [approvedBy, setApprovedBy] = useState({
           >
             {/* Header Row */}
             <div className="grid grid-cols-[8fr_4fr] border-b border-black bg-gray-100 h-[50px]">
-              <div className="py-2 px-2 font-semibold text-center border-r border-black flex items-center justify-center text-xl">
-                PARTICULARS
-              </div>
+              <div className="py-2 px-2 font-semibold text-center border-r border-black flex items-center justify-center text-xl">PARTICULARS</div>
               <div className="py-2 px-2 font-semibold text-center flex items-center justify-center text-xl">AMOUNT</div>
             </div>
 
