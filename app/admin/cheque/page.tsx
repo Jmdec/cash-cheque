@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Eye, Trash2, ArrowUpDown, Ban, AlertTriangle, Plus, Edit } from "lucide-react"
+import { Eye, Trash2, ArrowUpDown, Ban, AlertTriangle, Plus, Edit, Download } from "lucide-react"
 import LoadingWrapper from "@/components/loading-wrapper"
 import { DataTable } from "@/components/ui/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -20,6 +20,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { OTPDialog } from "@/components/ui/otp-dialog"
+import React from "react"
+import { ChequeVoucher as ChequeVoucherPreviewType, ChequeVoucherPreview } from "@/components/cheque-voucher-preview"
+import { createRoot } from "react-dom/client"
+import domtoimage from "dom-to-image"
 
 interface ChequeVoucher {
   id: string
@@ -95,7 +99,13 @@ export default function ChequeVoucherPage() {
   const [showOTPDialog, setShowOTPDialog] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState<ChequeVoucher | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("")
+  const [selectedExportVoucher, setSelectedExportVoucher] = useState<ChequeVoucherPreviewType | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
+  const previewRef = React.createRef<HTMLDivElement>()
   const adminEmail = "decastrojustin321@gmail.com"
+
+  const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const fetchVouchers = async (page = 1, search = "") => {
     try {
@@ -271,6 +281,150 @@ export default function ChequeVoucherPage() {
     })
   }
 
+  // fetch single voucher for export
+  const fetchSelectedVoucher = async (id: string) => {
+    try {
+      const response = await fetch(`/api/cheque-vouchers/${id}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to fetch cash voucher")
+      }
+
+      const data: ChequeVoucherPreviewType = await response.json()
+      setSelectedExportVoucher(data) // must match interface
+    } catch (err: any) {
+      console.error("Error fetching selected voucher:", err)
+      toast({
+        title: "Error",
+        description: `Failed to load cash voucher: ${err.message}`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const getSignatureUrl = (relativePath: string | null) => {
+    if (!relativePath) {
+      return "/placeholder.svg?height=60&width=120&text=No+Signature"
+    }
+
+    if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
+      if (LARAVEL_API_URL) {
+        return `/api/proxy-image?url=${encodeURIComponent(relativePath)}`
+      } else {
+        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
+      }
+    }
+
+    if (relativePath.startsWith("/signatures/")) {
+      if (!LARAVEL_API_URL) {
+        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
+      }
+      let baseUrl = LARAVEL_API_URL.replace(/\/+$/, "")
+      if (baseUrl.endsWith("/api")) {
+        baseUrl = baseUrl.slice(0, -4)
+      }
+      const fullLaravelUrl = `${baseUrl}${relativePath}`
+      return `/api/proxy-image?url=${encodeURIComponent(fullLaravelUrl)}`
+    }
+
+    return "/placeholder.svg?height=60&width=120&text=Invalid+Path"
+  }
+
+  // Helper function to format date consistently for preview to avoid hydration issues
+  const formatDateForPreview = (dateString: string) => {
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "" // Handle invalid date strings
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    const day = date.getDate()
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
+    return `${month} ${day}, ${year}`
+  }
+
+  // Handle image load errors
+  const handleImageError = (imageKey: string) => {
+    setImageErrors((prev) => ({ ...prev, [imageKey]: true }))
+  }
+
+  // Handle export voucher to png
+  const exportVoucher = async (voucher: ChequeVoucher) => {
+    fetchSelectedVoucher(voucher.id)
+    try {
+      setIsExporting(true)
+
+      const container = document.getElementById("voucher-export-container")!
+      container.innerHTML = ""
+      const div = document.createElement("div")
+      container.appendChild(div)
+
+      const previewRef = React.createRef<HTMLDivElement>()
+
+      // Render voucher preview
+      const root = createRoot(div)
+      root.render(
+        <ChequeVoucherPreview
+          ref={previewRef}
+          voucher={selectedExportVoucher!}
+          getSignatureUrl={getSignatureUrl}
+          handleImageError={handleImageError}
+          formatDate={formatDate}
+          formatDateForPreview={formatDateForPreview}
+        />,
+      )
+
+      // Wait for React to render & images to load
+      await new Promise<void>((res) => requestAnimationFrame(() => res()))
+      const node = previewRef.current
+      if (!node) throw new Error("Voucher preview failed to render")
+
+      const images = Array.from(node.querySelectorAll("img"))
+      await Promise.all(
+        images.map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise((res) => {
+                img.onload = img.onerror = res
+              }),
+        ),
+      )
+
+      const originalWidth = node.style.width
+      const originalMaxWidth = node.style.maxWidth
+      node.style.width = "1800px"
+      node.style.maxWidth = "1800px"
+
+      // Export as PNG
+      const dataUrl = await (domtoimage as any).toPng(node, {
+        bgcolor: "#ffffff",
+        width: 1800,
+        height: node.offsetHeight,
+        style: { backgroundColor: "#ffffff", boxSizing: "border-box" },
+      })
+
+      node.style.width = originalWidth
+      node.style.maxWidth = originalMaxWidth
+
+      const link = document.createElement("a")
+      link.download = `cash-voucher-${voucher.voucher_no || "untitled"}.png`
+      link.href = dataUrl
+      link.click()
+
+      // Clean up
+      root.unmount()
+      div.remove()
+    } catch (error: any) {
+      console.error("Error exporting voucher:", error)
+      toast({
+        title: "Export Failed",
+        description: error.message || "Unable to export voucher.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
   }
@@ -394,24 +548,28 @@ export default function ChequeVoucherPage() {
         const voucher = row.original
         return (
           <div className="flex justify-start space-x-1">
-            <Button variant="outline" size="sm" onClick={() => handleView(voucher.id)} className="h-8 w-8 p-0">
+            <Button variant="outline" size="sm" onClick={() => handleView(voucher.id)} className="relative group h-8 w-8 p-0">
               <Eye className="h-4 w-4 text-blue-600" />
               <span className="sr-only">View</span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
+                View
+              </span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEdit(voucher.id)}
-              className="h-8 w-8 p-0 bg-transparent"
-            >
+            <Button variant="outline" size="sm" onClick={() => handleEdit(voucher.id)} className="relative group h-8 w-8 p-0 bg-transparent">
               <Edit className="h-4 w-4 text-green-600" />
               <span className="sr-only">Edit</span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
+                Edit
+              </span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-transparent">
+                <Button variant="outline" size="sm" className="relative group h-8 w-8 p-0 bg-transparent">
                   <Ban className="h-4 w-4 text-orange-600" />
                   <span className="sr-only">Cancel</span>
+                  <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
+                Cancel
+              </span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="w-[95vw] max-w-md mx-auto">
@@ -421,31 +579,32 @@ export default function ChequeVoucherPage() {
                     <span>Cancel Voucher</span>
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-gray-600">
-                    Are you sure you want to cancel voucher{" "}
-                    <span className="font-semibold text-gray-900 break-all">{voucher.voucher_no}</span> (Check #{" "}
-                    <span className="font-mono font-semibold text-gray-900">{voucher.check_no}</span>
+                    Are you sure you want to cancel voucher <span className="font-semibold text-gray-900 break-all">{voucher.voucher_no}</span> (Check
+                    # <span className="font-mono font-semibold text-gray-900">{voucher.check_no}</span>
                     )?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                   <AlertDialogCancel className="w-full sm:w-auto">No, Keep Active</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleCancel(voucher.id)}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
+                  <AlertDialogAction onClick={() => handleCancel(voucher.id)} className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700">
                     Yes, Cancel Voucher
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDeleteClick(voucher)}
-              className="h-8 w-8 p-0 bg-transparent"
-            >
+            <Button variant="outline" size="sm" onClick={() => handleDeleteClick(voucher)} className="relative group h-8 w-8 p-0 bg-transparent">
               <Trash2 className="h-4 w-4 text-red-600" />
               <span className="sr-only">Delete</span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
+                Delete
+              </span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportVoucher(voucher)} disabled={isExporting} className="relative group h-8 w-8 p-0">
+              <Download className="h-4 w-4" />
+              <span className="sr-only">Export</span>
+              <span className="absolute bottom-full mb-2 w-max hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded">
+                Export as Image
+              </span>
             </Button>
           </div>
         )
@@ -464,16 +623,27 @@ export default function ChequeVoucherPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div style={{ position: "absolute", left: -9999, top: -9999, pointerEvents: "none" }}>
+          {/* Hidden VoucherPreview for export */}
+          <div id="voucher-export-container" />
+          {selectedExportVoucher && (
+            <ChequeVoucherPreview
+              ref={previewRef}
+              voucher={selectedExportVoucher!}
+              getSignatureUrl={getSignatureUrl}
+              handleImageError={handleImageError}
+              formatDate={formatDate}
+              formatDateForPreview={formatDateForPreview}
+            />
+          )}
+        </div>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Cheque Vouchers</h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1">Manage and track your cheque voucher transactions</p>
           </div>
-          <Button
-            onClick={() => router.push("/cheque-voucher")}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-          >
+          <Button onClick={() => router.push("/cheque-voucher")} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Create Cheque Voucher
           </Button>
