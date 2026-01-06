@@ -100,35 +100,40 @@ export default function ChequeVoucherPage() {
   const [selectedVoucher, setSelectedVoucher] = useState<ChequeVoucher | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("")
   const [isExporting, setIsExporting] = useState(false)
-  const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
+  const [cachedPages, setCachedPages] = useState<Record<string, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
 
   const fetchVouchers = async (page = 1, search = "") => {
-    if (cachedPages[page] && !search) {
-      setVouchers(cachedPages[page])
-      setPagination((prev) => ({
-        current_page: page,
-        per_page: prev?.per_page ?? 10,
-        total: prev?.total ?? 0,
-        last_page: prev?.last_page ?? 1,
-        from: prev?.from ?? 0,
-        to: prev?.to ?? 0,
-      }))
+    const trimmedSearch = search.trim()
+    const cacheKey = `${trimmedSearch}_${page}`
 
-      return
+    if (cachedPages[cacheKey]) {
+      setVouchers(cachedPages[cacheKey])
+      // Always fetch pagination from backend
+      try {
+        const url = `/api/cheque-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(trimmedSearch)}`
+        const response = await fetch(url)
+        const data: PaginatedResponse = await response.json()
+        setPagination({
+          current_page: data.current_page,
+          per_page: data.per_page,
+          total: data.total,
+          last_page: data.last_page,
+          from: data.from,
+          to: data.to,
+        })
+      } catch (error) {
+        console.error(error)
+      }
+      return cachedPages[cacheKey]
     }
 
     try {
       setIsLoading(true)
-      const url = `/api/cheque-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(search)}`
+      const url = `/api/cheque-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(trimmedSearch)}`
       const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error("Failed to fetch cheque vouchers")
-      }
       const data: PaginatedResponse = await response.json()
-      if (!data.data || !Array.isArray(data.data)) {
-        throw new Error("Invalid data format: Expected paginated response with data array")
-      }
+
       setVouchers(data.data)
       setPagination({
         current_page: data.current_page,
@@ -139,14 +144,12 @@ export default function ChequeVoucherPage() {
         to: data.to,
       })
 
-      setCachedPages((prev) => ({ ...prev, [page]: data.data }))
-    } catch (error: any) {
-      console.error("Error fetching cheque vouchers:", error)
-      toast({
-        title: "Error",
-        description: `Failed to load vouchers: ${error.message || "An unexpected error occurred."}`,
-        variant: "destructive",
-      })
+      setCachedPages((prev) => ({ ...prev, [cacheKey]: data.data }))
+
+      return data.data
+    } catch (error) {
+      console.error(error)
+      return []
     } finally {
       setIsLoading(false)
     }
@@ -159,25 +162,23 @@ export default function ChequeVoucherPage() {
       const { currentPage, globalSearchQuery, selectedVoucherId } = JSON.parse(savedState)
       setCurrentPage(currentPage)
       setGlobalSearchQuery(globalSearchQuery)
-
       // Fetch vouchers and select the previously clicked row
-      fetchVouchers(currentPage, globalSearchQuery).then(() => {
-        const row = vouchers.find((v) => v.id === selectedVoucherId)
+      fetchVouchers(currentPage, globalSearchQuery).then((fetchedVouchers) => {
+        const row = fetchedVouchers?.find((v: any) => v.id === selectedVoucherId)
         if (row) setSelectedVoucher(row)
       })
 
       // Clear sessionStorage after restoring state, so refresh goes back to page 1
       sessionStorage.removeItem("chequeVoucherTableState")
     } else {
-      // No saved state: normal first page
-      fetchVouchers(1, "")
+      fetchVouchers(1, "") // first page default
     }
   }, [])
 
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchVouchers(currentPage, globalSearchQuery)
-    }, 300) // 300ms debounce
+    }, 1000) // 1000ms debounce
     return () => {
       clearTimeout(handler)
     }
@@ -192,6 +193,12 @@ export default function ChequeVoucherPage() {
         selectedVoucherId: selectedVoucher?.id,
       }),
     )
+  }
+
+  const handleClearSearch = () => {
+    setGlobalSearchQuery("")
+    setCurrentPage(1)
+    fetchVouchers(1, "")
   }
 
   const handleView = (id: string) => {
@@ -326,15 +333,12 @@ export default function ChequeVoucherPage() {
     })
   }
 
-  
-
   // Handle export voucher to png
   const exportVoucher = async (voucher: ChequeVoucher) => {
-    saveTableState()
     try {
       setIsExporting(true)
 
-      // Fetch selected voucher 
+      // Fetch selected voucher
       const response = await fetch(`/api/cheque-vouchers/${voucher.id}`)
       if (!response.ok) {
         const errorData = await response.json()
@@ -640,9 +644,10 @@ export default function ChequeVoucherPage() {
               totalRows={pagination?.total || 0}
               fromRow={pagination?.from || 0}
               toRow={pagination?.to || 0}
+              onClearSearch={handleClearSearch}
             />
             {/* Pagination - Responsive for all screen sizes */}
-            {pagination && pagination.last_page > 1 && (
+            {pagination && pagination.last_page >= 1 && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-4 sm:mt-6 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                   <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">

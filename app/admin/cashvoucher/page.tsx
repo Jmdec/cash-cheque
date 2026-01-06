@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
@@ -71,33 +71,50 @@ export default function CashVoucherPage() {
   const [selectedVoucher, setSelectedVoucher] = useState<CashVoucher | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("") // Renamed for consistency
   const [isExporting, setIsExporting] = useState(false)
-  const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
+  const [cachedPages, setCachedPages] = useState<Record<string, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
 
   const fetchVouchers = async (page = 1, search = "") => {
-    // Return cached page if exists and search query hasn't changed
-    if (cachedPages[page] && !search) {
-      setVouchers(cachedPages[page])
-      setPagination((prev) => ({
-        current_page: page,
-        per_page: prev?.per_page ?? 10,
-        total: prev?.total ?? 0,
-        last_page: prev?.last_page ?? 1,
-        from: prev?.from ?? 0,
-        to: prev?.to ?? 0,
-      }))
+    const trimmedSearch = search.trim()
+    const cacheKey = `${trimmedSearch}_${page}` // cache per page + search
 
-      return
+    // Return cached vouchers if exists
+    if (cachedPages[cacheKey]) {
+      setVouchers(cachedPages[cacheKey])
+      // always fetch fresh pagination from backend
+      try {
+        const url = `/api/cash-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(trimmedSearch)}`
+        const response = await fetch(url)
+        if (!response.ok) throw new Error("Failed to fetch cash vouchers")
+
+        const data: PaginatedResponse = await response.json()
+
+        setPagination({
+          current_page: data.current_page,
+          per_page: data.per_page,
+          total: data.total,
+          last_page: data.last_page,
+          from: data.from,
+          to: data.to,
+        })
+      } catch (error) {
+        console.error(error)
+      }
+
+      return cachedPages[cacheKey]
     }
 
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/cash-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(search)}`)
+
+      const url = `/api/cash-vouchers?page=${page}&per_page=10&search=${encodeURIComponent(trimmedSearch)}`
+      const response = await fetch(url)
       if (!response.ok) throw new Error("Failed to fetch cash vouchers")
 
       const data: PaginatedResponse = await response.json()
       if (!data.data || !Array.isArray(data.data)) throw new Error("Invalid data format")
 
+      // Update vouchers & pagination
       setVouchers(data.data)
       setPagination({
         current_page: data.current_page,
@@ -108,8 +125,10 @@ export default function CashVoucherPage() {
         to: data.to,
       })
 
-      // Save to cache
-      setCachedPages((prev) => ({ ...prev, [page]: data.data }))
+      // Cache only the data, not pagination
+      setCachedPages((prev) => ({ ...prev, [cacheKey]: data.data }))
+
+      return data.data
     } catch (error: any) {
       console.error("Error fetching cash vouchers:", error)
       toast({
@@ -117,40 +136,40 @@ export default function CashVoucherPage() {
         description: `Failed to load vouchers: ${error.message || "An unexpected error occurred."}`,
         variant: "destructive",
       })
+      return []
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    // Check if sessionStorage has saved state
     const savedState = sessionStorage.getItem("cashVoucherTableState")
+
     if (savedState) {
       const { currentPage, globalSearchQuery, selectedVoucherId } = JSON.parse(savedState)
       setCurrentPage(currentPage)
       setGlobalSearchQuery(globalSearchQuery)
 
-      // Fetch vouchers and select the previously clicked row
-      fetchVouchers(currentPage, globalSearchQuery).then(() => {
-        const row = vouchers.find((v) => v.id === selectedVoucherId)
+      // fetch vouchers and select row using returned data
+      fetchVouchers(currentPage, globalSearchQuery).then((fetchedVouchers) => {
+        const row = fetchedVouchers?.find((v) => v.id === selectedVoucherId)
         if (row) setSelectedVoucher(row)
       })
 
-      // Clear sessionStorage after restoring state, so refresh goes back to page 1
       sessionStorage.removeItem("cashVoucherTableState")
     } else {
-      // No saved state: normal first page
-      fetchVouchers(1, "")
+      fetchVouchers(1, "") // first page default
     }
   }, [])
 
-  // Search debounce
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchVouchers(1, globalSearchQuery) // always start from page 1 on search
-    }, 300)
-    return () => clearTimeout(handler)
-  }, [globalSearchQuery])
+      fetchVouchers(currentPage, globalSearchQuery)
+    }, 300) // 300ms debounce
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [currentPage, globalSearchQuery])
 
   const saveTableState = () => {
     sessionStorage.setItem(
@@ -161,6 +180,12 @@ export default function CashVoucherPage() {
         selectedVoucherId: selectedVoucher?.id,
       }),
     )
+  }
+
+  const handleClearSearch = () => {
+    setGlobalSearchQuery("")
+    setCurrentPage(1)
+    fetchVouchers(1, "")
   }
 
   const handleView = (id: string) => {
@@ -240,11 +265,10 @@ export default function CashVoucherPage() {
 
   // Handle export voucher to png
   const exportVoucher = async (voucher: CashVoucher) => {
-    saveTableState()
     try {
       setIsExporting(true)
 
-      // Fetch selected voucher 
+      // Fetch selected voucher
       const response = await fetch(`/api/cash-vouchers/${voucher.id}`)
       if (!response.ok) {
         const errorData = await response.json()
@@ -372,7 +396,6 @@ export default function CashVoucherPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    // fetchVouchers(page) // Removed direct call, useEffect will handle it
   }
 
   const handlePreviousPage = () => {
@@ -671,6 +694,7 @@ export default function CashVoucherPage() {
                 totalRows={pagination?.total || 0}
                 fromRow={pagination?.from || 0}
                 toRow={pagination?.to || 0}
+                onClearSearch={handleClearSearch}
               />
             </div>
             {/* Mobile Cards */}
@@ -715,7 +739,7 @@ export default function CashVoucherPage() {
               </div>
             </div>
             {/* Pagination - Responsive for all screen sizes */}
-            {pagination && pagination.last_page > 1 && (
+            {pagination && pagination.last_page >= 1 && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-4 sm:mt-6 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                   <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">

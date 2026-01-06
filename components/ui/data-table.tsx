@@ -15,13 +15,7 @@ import {
 import { ChevronDown, Search, Settings2, X, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   totalRows: number
   fromRow: number
   toRow: number
+  onClearSearch: () => void
 }
 
 export function DataTable<TData, TValue>({
@@ -58,6 +53,7 @@ export function DataTable<TData, TValue>({
   totalRows,
   fromRow,
   toRow,
+  onClearSearch,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -133,7 +129,12 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onGlobalFilterChange("")}
+                onClick={() => {
+                  // 1. Clear the parent global search state
+                  onClearSearch?.()
+                  // 2. Clear the input immediately
+                  onGlobalFilterChange("")
+                }}
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 sm:h-8 w-7 sm:w-8 p-0 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
@@ -184,9 +185,7 @@ export function DataTable<TData, TValue>({
                         <DropdownMenuCheckboxItem
                           key={column.id}
                           className={`flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-b-0 ${
-                            isVisible
-                              ? "bg-green-50 hover:bg-green-100 text-gray-900"
-                              : "bg-gray-50 hover:bg-gray-100 text-gray-600"
+                            isVisible ? "bg-green-50 hover:bg-green-100 text-gray-900" : "bg-gray-50 hover:bg-gray-100 text-gray-600"
                           }`}
                           checked={isVisible}
                           onCheckedChange={(value) => column.toggleVisibility(!!value)}
@@ -197,9 +196,7 @@ export function DataTable<TData, TValue>({
                             ) : (
                               <EyeOff className="h-4 w-4 text-gray-400 flex-shrink-0" />
                             )}
-                            <span className={`text-sm font-medium ${isVisible ? "text-gray-900" : "text-gray-500"}`}>
-                              {columnName}
-                            </span>
+                            <span className={`text-sm font-medium ${isVisible ? "text-gray-900" : "text-gray-500"}`}>{columnName}</span>
                             {isVisible && (
                               <div className="ml-auto">
                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
