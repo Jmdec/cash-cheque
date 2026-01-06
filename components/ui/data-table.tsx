@@ -86,7 +86,6 @@ export function DataTable<TData, TValue>({
   })
 
   const hiddenColumnsCount = table.getAllColumns().filter((column) => !column.getIsVisible()).length
-
   // Helper function to format column names
   const formatColumnName = (columnId: string) => {
     const columnNameMap: Record<string, string> = {
@@ -111,6 +110,16 @@ export function DataTable<TData, TValue>({
     )
   }
 
+  // Helper function to render cell content with null/undefined check
+  const renderCell = (cell: any) => {
+    const value = cell.getValue()
+    const hasAccessor = !!cell.column.columnDef.accessorKey
+
+    if (hasAccessor && value == null) return ""
+
+    return flexRender(cell.column.columnDef.cell, cell.getContext())
+  }
+
   return (
     <div className="w-full space-y-4">
       {/* Toolbar */}
@@ -130,9 +139,7 @@ export function DataTable<TData, TValue>({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  // 1. Clear the parent global search state
                   onClearSearch?.()
-                  // 2. Clear the input immediately
                   onGlobalFilterChange("")
                 }}
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 sm:h-8 w-7 sm:w-8 p-0 text-gray-400 hover:text-gray-600"
@@ -242,7 +249,7 @@ export function DataTable<TData, TValue>({
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="px-3 sm:px-4 py-3 sm:py-4 text-gray-900 text-xs sm:text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {renderCell(cell)}
                       </TableCell>
                     ))}
                   </TableRow>

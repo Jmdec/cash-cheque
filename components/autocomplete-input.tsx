@@ -24,7 +24,7 @@ export default function AutocompleteInput({ value, onChange, voucher, type, plac
 
     const handler = setTimeout(async () => {
       try {
-        const res = await fetch(`${LARAVEL_API_URL}/autocomplete?voucher=${voucher}&field=${type}&query=${value}`)
+        const res = await fetch(`${LARAVEL_API_URL}/autocomplete/input?voucher=${voucher}&field=${type}&query=${value}`)
         const data = await res.json()
         setSuggestions(data)
       } catch (error) {

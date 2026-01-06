@@ -80,7 +80,6 @@ export default function CashVoucher() {
         })
         if (response.ok) {
           const data = await response.json()
-          console.log("Fetched latest voucher number from API:", data.latest_voucher_no)
           setFormData((prev) => ({
             ...prev,
             voucherNo: data.latest_voucher_no,
