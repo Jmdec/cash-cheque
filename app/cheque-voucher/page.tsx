@@ -432,29 +432,32 @@ export default function ChequeVoucher() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="checkNo">Check No</Label>
-                <Input
-                  id="checkNo"
-                  placeholder="Enter check number"
+                <AutocompleteInput
                   value={formData.checkNo}
-                  onChange={(e) => setFormData({ ...formData, checkNo: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, checkNo: val })}
+                  type="check_no"
+                  voucher="cheque"
+                  placeholder="Enter check number"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="accountName">Account Name</Label>
-                <Input
-                  id="accountName"
-                  placeholder="Enter account name"
+                <AutocompleteInput
                   value={formData.accountName}
-                  onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, accountName: val })}
+                  type="account_name"
+                  voucher="cheque"
+                  placeholder="Enter account name"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="accountNumber">Account Number</Label>
-                <Input
-                  id="accountNumber"
-                  placeholder="Enter account number"
+                <AutocompleteInput
                   value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, accountNumber: val })}
+                  type="account_number"
+                  voucher="cheque"
+                  placeholder="Enter account number"
                 />
               </div>
             </div>

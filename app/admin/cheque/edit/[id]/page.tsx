@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import LoadingWrapper from "@/components/loading-wrapper"
 import Image from "next/image"
+import AutocompleteInput from "@/components/autocomplete-input"
 
 interface ChequeVoucher {
   id: string
@@ -282,7 +283,13 @@ export default function ChequeVoucherEditPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="voucher_no">Voucher No</Label>
-            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required />
+            <AutocompleteInput
+              value={formData.voucher_no}
+              onChange={(val) => setFormData({ ...formData, voucher_no: val })}
+              type="voucher_no"
+              voucher="cheque"
+              required={true}
+            />
           </div>
           <div>
             <Label htmlFor="date">Date</Label>
@@ -290,18 +297,16 @@ export default function ChequeVoucherEditPage() {
           </div>
           <div>
             <Label htmlFor="paid_to">Paid To</Label>
-            <Input id="paid_to" name="paid_to" value={formData.paid_to} onChange={handleChange} />
+            <AutocompleteInput
+              value={formData.paid_to}
+              onChange={(val) => setFormData({ ...formData, paid_to: val })}
+              type="paid_to"
+              voucher="cheque"
+            />
           </div>
           <div>
             <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={handleChange}
-            />
+            <Input id="amount" name="amount" type="number" step="0.01" value={formData.amount} onChange={handleChange} />
           </div>
           <div>
             <Label htmlFor="status">Status</Label>
@@ -337,28 +342,44 @@ export default function ChequeVoucherEditPage() {
           </div>
           <div>
             <Label htmlFor="check_no">Check No</Label>
-            <Input id="check_no" name="check_no" value={formData.check_no} onChange={handleChange} />
-          </div>
-          <div>
-            <Label htmlFor="account_name">Account Name</Label>
-            <Input id="account_name" name="account_name" value={formData.account_name} onChange={handleChange} />
-          </div>
-          <div>
-            <Label htmlFor="account_number">Account Number</Label>
-            <Input id="account_number" name="account_number" value={formData.account_number} onChange={handleChange} />
-          </div>
-          <div>
-            <Label htmlFor="project_details">Project Details</Label>
-            <Input
-              id="project_details"
-              name="project_details"
-              value={formData.project_details}
-              onChange={handleChange}
+             <AutocompleteInput
+              value={formData.check_no}
+              onChange={(val) => setFormData({ ...formData, check_no: val })}
+              type="check_no"
+              voucher="cheque"
+              
             />
           </div>
           <div>
+            <Label htmlFor="account_name">Account Name</Label>
+             <AutocompleteInput
+              value={formData.account_name}
+              onChange={(val) => setFormData({ ...formData, account_name: val })}
+              type="account_name"
+              voucher="cheque"
+            />
+          </div>
+          <div>
+            <Label htmlFor="account_number">Account Number</Label>
+            <AutocompleteInput
+              value={formData.account_number}
+              onChange={(val) => setFormData({ ...formData, account_number: val })}
+              type="account_number"
+              voucher="cheque"
+            />
+          </div>
+          <div>
+            <Label htmlFor="project_details">Project Details</Label>
+            <Input id="project_details" name="project_details" value={formData.project_details} onChange={handleChange} />
+          </div>
+          <div>
             <Label htmlFor="owner_client">Owner/Client</Label>
-            <Input id="owner_client" name="owner_client" value={formData.owner_client} onChange={handleChange} />
+            <AutocompleteInput
+              value={formData.owner_client}
+              onChange={(val) => setFormData({ ...formData, owner_client: val })}
+              type="owner_client"
+              voucher="cheque"
+            />
           </div>
         </div>
 
@@ -368,22 +389,11 @@ export default function ChequeVoucherEditPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="received_by_name">Name</Label>
-              <Input
-                id="received_by_name"
-                name="received_by_name"
-                value={formData.received_by_name}
-                onChange={handleChange}
-              />
+              <Input id="received_by_name" name="received_by_name" value={formData.received_by_name} onChange={handleChange} />
             </div>
             <div>
               <Label htmlFor="received_by_date">Date</Label>
-              <Input
-                id="received_by_date"
-                name="received_by_date"
-                type="date"
-                value={formData.received_by_date}
-                onChange={handleChange}
-              />
+              <Input id="received_by_date" name="received_by_date" type="date" value={formData.received_by_date} onChange={handleChange} />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="received_by_signature">Signature</Label>
@@ -398,12 +408,7 @@ export default function ChequeVoucherEditPage() {
                     className="border"
                     crossOrigin="anonymous"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleClearSignature("received_by_signature")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleClearSignature("received_by_signature")}>
                     Clear Signature
                   </Button>
                 </div>
@@ -418,22 +423,11 @@ export default function ChequeVoucherEditPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="approved_by_name">Name</Label>
-              <Input
-                id="approved_by_name"
-                name="approved_by_name"
-                value={formData.approved_by_name}
-                onChange={handleChange}
-              />
+              <Input id="approved_by_name" name="approved_by_name" value={formData.approved_by_name} onChange={handleChange} />
             </div>
             <div>
               <Label htmlFor="approved_by_date">Date</Label>
-              <Input
-                id="approved_by_date"
-                name="approved_by_date"
-                type="date"
-                value={formData.approved_by_date}
-                onChange={handleChange}
-              />
+              <Input id="approved_by_date" name="approved_by_date" type="date" value={formData.approved_by_date} onChange={handleChange} />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="approved_by_signature">Signature</Label>
@@ -448,12 +442,7 @@ export default function ChequeVoucherEditPage() {
                     className="border"
                     crossOrigin="anonymous"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleClearSignature("approved_by_signature")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleClearSignature("approved_by_signature")}>
                     Clear Signature
                   </Button>
                 </div>

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import LoadingWrapper from "@/components/loading-wrapper"
 import Image from "next/image"
+import AutocompleteInput from "@/components/autocomplete-input"
 
 interface CashVoucher {
   id: string
@@ -270,7 +271,7 @@ export default function CashVoucherEditPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="voucher_no">Voucher No</Label>
-            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required />
+            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required/>
           </div>
           <div>
             <Label htmlFor="date">Date</Label>
@@ -293,7 +294,12 @@ export default function CashVoucherEditPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="paid_to">Paid To</Label>
-            <Input id="paid_to" name="paid_to" value={formData.paid_to} onChange={handleChange} />
+            <AutocompleteInput
+              value={formData.paid_to}
+              onChange={(val) => setFormData({ ...formData, paid_to: val })}
+              type="paid_to"
+              voucher="cash"
+            />
           </div>
           <div>
             <Label htmlFor="status">Status</Label>
@@ -333,7 +339,12 @@ export default function CashVoucherEditPage() {
           </div>
           <div>
             <Label htmlFor="owner_client">Owner/Client</Label>
-            <Input id="owner_client" name="owner_client" value={formData.owner_client} onChange={handleChange} />
+            <AutocompleteInput
+              value={formData.owner_client}
+              onChange={(val) => setFormData({ ...formData, owner_client: val })}
+              type="owner_client"
+              voucher="cash"
+            />
           </div>
         </div>
 

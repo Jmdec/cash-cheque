@@ -4,11 +4,12 @@ interface AutocompleteInputProps {
   value: string
   onChange: (val: string) => void
   voucher: string
-  type: "paid_to" | "owner_client"
+  type: string
   placeholder?: string
+  required?: boolean
 }
 
-export default function AutocompleteInput({ value, onChange, voucher, type, placeholder = "" }: AutocompleteInputProps) {
+export default function AutocompleteInput({ value, onChange, voucher, type, placeholder = "", required = false }: AutocompleteInputProps) {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -63,6 +64,7 @@ export default function AutocompleteInput({ value, onChange, voucher, type, plac
         placeholder={placeholder}
         className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300"
         autoComplete="off"
+        required={required}
       />
 
       {showDropdown && suggestions.length > 0 && (
