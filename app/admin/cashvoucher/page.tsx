@@ -165,7 +165,7 @@ export default function CashVoucherPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchVouchers(currentPage, globalSearchQuery)
-    }, 1000) // 1000ms debounce
+    }, 300) // 300ms debounce
     return () => {
       clearTimeout(handler)
     }
@@ -636,14 +636,6 @@ export default function CashVoucherPage() {
     },
   ]
 
-  if (isLoading) {
-    return (
-      <LoadingWrapper>
-        <p>Loading cash vouchers...</p>
-      </LoadingWrapper>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div style={{ position: "absolute", left: -9999, top: -9999, pointerEvents: "none" }}>
@@ -695,6 +687,7 @@ export default function CashVoucherPage() {
                 fromRow={pagination?.from || 0}
                 toRow={pagination?.to || 0}
                 onClearSearch={handleClearSearch}
+                isLoading={isLoading}
               />
             </div>
             {/* Mobile Cards */}

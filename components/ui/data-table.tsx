@@ -37,6 +37,7 @@ interface DataTableProps<TData, TValue> {
   fromRow: number
   toRow: number
   onClearSearch: () => void
+  isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -54,6 +55,7 @@ export function DataTable<TData, TValue>({
   fromRow,
   toRow,
   onClearSearch,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -240,7 +242,18 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                // Skeleton state
+                [...Array(10)].map((_, rowIndex) => (
+                  <TableRow key={rowIndex} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                    {[...Array(columns.length - hiddenColumnsCount)].map((_, cellIndex) => (
+                      <TableCell key={cellIndex} className="px-3 sm:px-4 py-3 sm:py-4 text-gray-900 text-xs sm:text-sm">
+                        <div className="h-4 w-full bg-gray-200 animate-pulse rounded"></div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -255,6 +268,7 @@ export function DataTable<TData, TValue>({
                   </TableRow>
                 ))
               ) : (
+                // Empty state
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center space-y-3 py-8">

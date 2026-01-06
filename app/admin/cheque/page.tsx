@@ -178,7 +178,7 @@ export default function ChequeVoucherPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchVouchers(currentPage, globalSearchQuery)
-    }, 1000) // 1000ms debounce
+    }, 300) // 300ms debounce
     return () => {
       clearTimeout(handler)
     }
@@ -588,14 +588,6 @@ export default function ChequeVoucherPage() {
     },
   ]
 
-  if (isLoading) {
-    return (
-      <LoadingWrapper>
-        <p>Loading cheque vouchers...</p>
-      </LoadingWrapper>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -645,6 +637,7 @@ export default function ChequeVoucherPage() {
               fromRow={pagination?.from || 0}
               toRow={pagination?.to || 0}
               onClearSearch={handleClearSearch}
+              isLoading={isLoading}
             />
             {/* Pagination - Responsive for all screen sizes */}
             {pagination && pagination.last_page >= 1 && (
