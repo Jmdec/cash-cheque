@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { OTPDialog } from "@/components/ui/otp-dialog"
 import React from "react"
-import { ChequeVoucher as ChequeVoucherPreviewType, ChequeVoucherPreview } from "@/components/cheque-voucher-preview"
+import { ChequeVoucher as VoucherChequePreview, ChequeVoucherPreview } from "@/components/cheque-voucher-preview"
 import { createRoot } from "react-dom/client"
 import domtoimage from "dom-to-image"
 
@@ -99,14 +99,9 @@ export default function ChequeVoucherPage() {
   const [showOTPDialog, setShowOTPDialog] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState<ChequeVoucher | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("")
-  const [selectedExportVoucher, setSelectedExportVoucher] = useState<ChequeVoucherPreviewType | null>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
-  const previewRef = React.createRef<HTMLDivElement>()
   const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
-
-  const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const fetchVouchers = async (page = 1, search = "") => {
     if (cachedPages[page] && !search) {
@@ -159,7 +154,7 @@ export default function ChequeVoucherPage() {
 
   useEffect(() => {
     // Check if sessionStorage has saved state
-    const savedState = sessionStorage.getItem("cashVoucherTableState")
+    const savedState = sessionStorage.getItem("chequeVoucherTableState")
     if (savedState) {
       const { currentPage, globalSearchQuery, selectedVoucherId } = JSON.parse(savedState)
       setCurrentPage(currentPage)
@@ -172,7 +167,7 @@ export default function ChequeVoucherPage() {
       })
 
       // Clear sessionStorage after restoring state, so refresh goes back to page 1
-      sessionStorage.removeItem("cashVoucherTableState")
+      sessionStorage.removeItem("chequeVoucherTableState")
     } else {
       // No saved state: normal first page
       fetchVouchers(1, "")
@@ -188,9 +183,9 @@ export default function ChequeVoucherPage() {
     }
   }, [currentPage, globalSearchQuery])
 
-   const saveTableState = () => {
+  const saveTableState = () => {
     sessionStorage.setItem(
-      "cashVoucherTableState",
+      "chequeVoucherTableState",
       JSON.stringify({
         currentPage,
         globalSearchQuery,
@@ -331,100 +326,35 @@ export default function ChequeVoucherPage() {
     })
   }
 
-  // fetch single voucher for export
-  const fetchSelectedVoucher = async (id: string) => {
-    try {
-      const response = await fetch(`/api/cheque-vouchers/${id}`)
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to fetch cash voucher")
-      }
-
-      const data: ChequeVoucherPreviewType = await response.json()
-      setSelectedExportVoucher(data) // must match interface
-    } catch (err: any) {
-      console.error("Error fetching selected voucher:", err)
-      toast({
-        title: "Error",
-        description: `Failed to load cash voucher: ${err.message}`,
-        variant: "destructive",
-      })
-    }
-  }
-
-  const getSignatureUrl = (relativePath: string | null) => {
-    if (!relativePath) {
-      return "/placeholder.svg?height=60&width=120&text=No+Signature"
-    }
-
-    if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
-      if (LARAVEL_API_URL) {
-        return `/api/proxy-image?url=${encodeURIComponent(relativePath)}`
-      } else {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-    }
-
-    if (relativePath.startsWith("/signatures/")) {
-      if (!LARAVEL_API_URL) {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-      let baseUrl = LARAVEL_API_URL.replace(/\/+$/, "")
-      if (baseUrl.endsWith("/api")) {
-        baseUrl = baseUrl.slice(0, -4)
-      }
-      const fullLaravelUrl = `${baseUrl}${relativePath}`
-      return `/api/proxy-image?url=${encodeURIComponent(fullLaravelUrl)}`
-    }
-
-    return "/placeholder.svg?height=60&width=120&text=Invalid+Path"
-  }
-
-  // Helper function to format date consistently for preview to avoid hydration issues
-  const formatDateForPreview = (dateString: string) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "" // Handle invalid date strings
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    const day = date.getDate()
-    const month = months[date.getMonth()]
-    const year = date.getFullYear()
-    return `${month} ${day}, ${year}`
-  }
-
-  // Handle image load errors
-  const handleImageError = (imageKey: string) => {
-    setImageErrors((prev) => ({ ...prev, [imageKey]: true }))
-  }
+  
 
   // Handle export voucher to png
   const exportVoucher = async (voucher: ChequeVoucher) => {
-    fetchSelectedVoucher(voucher.id)
+    saveTableState()
     try {
       setIsExporting(true)
 
+      // Fetch selected voucher 
+      const response = await fetch(`/api/cheque-vouchers/${voucher.id}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to fetch cheque voucher")
+      }
+
+      const data: VoucherChequePreview = await response.json()
       const container = document.getElementById("voucher-export-container")!
       container.innerHTML = ""
       const div = document.createElement("div")
       container.appendChild(div)
 
       const previewRef = React.createRef<HTMLDivElement>()
-
-      // Render voucher preview
       const root = createRoot(div)
-      root.render(
-        <ChequeVoucherPreview
-          ref={previewRef}
-          voucher={selectedExportVoucher!}
-          getSignatureUrl={getSignatureUrl}
-          handleImageError={handleImageError}
-          formatDate={formatDate}
-          formatDateForPreview={formatDateForPreview}
-        />,
-      )
 
-      // Wait for React to render & images to load
-      await new Promise<void>((res) => requestAnimationFrame(() => res()))
+      root.render(<ChequeVoucherPreview ref={previewRef} voucher={data} />)
+
+      // Give React time to flush
+      await new Promise((res) => setTimeout(res, 200))
+
       const node = previewRef.current
       if (!node) throw new Error("Voucher preview failed to render")
 
@@ -444,7 +374,6 @@ export default function ChequeVoucherPage() {
       node.style.width = "1800px"
       node.style.maxWidth = "1800px"
 
-      // Export as PNG
       const dataUrl = await (domtoimage as any).toPng(node, {
         bgcolor: "#ffffff",
         width: 1800,
@@ -456,11 +385,10 @@ export default function ChequeVoucherPage() {
       node.style.maxWidth = originalMaxWidth
 
       const link = document.createElement("a")
-      link.download = `cash-voucher-${voucher.voucher_no || "untitled"}.png`
+      link.download = `cheque-voucher-${voucher.voucher_no || "untitled"}.png`
       link.href = dataUrl
       link.click()
 
-      // Clean up
       root.unmount()
       div.remove()
     } catch (error: any) {
@@ -670,16 +598,6 @@ export default function ChequeVoucherPage() {
         <div style={{ position: "absolute", left: -9999, top: -9999, pointerEvents: "none" }}>
           {/* Hidden VoucherPreview for export */}
           <div id="voucher-export-container" />
-          {selectedExportVoucher && (
-            <ChequeVoucherPreview
-              ref={previewRef}
-              voucher={selectedExportVoucher!}
-              getSignatureUrl={getSignatureUrl}
-              handleImageError={handleImageError}
-              formatDate={formatDate}
-              formatDateForPreview={formatDateForPreview}
-            />
-          )}
         </div>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">

@@ -69,15 +69,10 @@ export default function CashVoucherPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showOTPDialog, setShowOTPDialog] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState<CashVoucher | null>(null)
-  const [selectedExportVoucher, setSelectedExportVoucher] = useState<VoucherCashPreview | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("") // Renamed for consistency
   const [isExporting, setIsExporting] = useState(false)
-  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
-  const previewRef = React.createRef<HTMLDivElement>()
   const [cachedPages, setCachedPages] = useState<Record<number, any[]>>({})
   const adminEmail = "decastrojustin321@gmail.com"
-
-  const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const fetchVouchers = async (page = 1, search = "") => {
     // Return cached page if exists and search query hasn't changed
@@ -243,101 +238,33 @@ export default function CashVoucherPage() {
     }
   }
 
-  // fetch single voucher for export
-  const fetchSelectedVoucher = async (id: string) => {
+  // Handle export voucher to png
+  const exportVoucher = async (voucher: CashVoucher) => {
+    saveTableState()
     try {
-      const response = await fetch(`/api/cash-vouchers/${id}`)
+      setIsExporting(true)
+
+      // Fetch selected voucher 
+      const response = await fetch(`/api/cash-vouchers/${voucher.id}`)
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || "Failed to fetch cash voucher")
       }
 
       const data: VoucherCashPreview = await response.json()
-      setSelectedExportVoucher(data) // must match interface
-    } catch (err: any) {
-      console.error("Error fetching selected voucher:", err)
-      toast({
-        title: "Error",
-        description: `Failed to load cash voucher: ${err.message}`,
-        variant: "destructive",
-      })
-    }
-  }
-
-  const getSignatureUrl = (relativePath: string | null) => {
-    if (!relativePath) {
-      return "/placeholder.svg?height=60&width=120&text=No+Signature"
-    }
-
-    if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
-      if (LARAVEL_API_URL) {
-        return `/api/proxy-image?url=${encodeURIComponent(relativePath)}`
-      } else {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-    }
-
-    if (relativePath.startsWith("/signatures/")) {
-      if (!LARAVEL_API_URL) {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-      let baseUrl = LARAVEL_API_URL.replace(/\/+$/, "")
-      if (baseUrl.endsWith("/api")) {
-        baseUrl = baseUrl.slice(0, -4)
-      }
-      const fullLaravelUrl = `${baseUrl}${relativePath}`
-      return `/api/proxy-image?url=${encodeURIComponent(fullLaravelUrl)}`
-    }
-
-    return "/placeholder.svg?height=60&width=120&text=Invalid+Path"
-  }
-
-  // Helper function to format date consistently for preview to avoid hydration issues
-  const formatDateForPreview = (dateString: string) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "" // Handle invalid date strings
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    const day = date.getDate()
-    const month = months[date.getMonth()]
-    const year = date.getFullYear()
-    return `${month} ${day}, ${year}`
-  }
-
-  // Handle image load errors
-  const handleImageError = (imageKey: string) => {
-    setImageErrors((prev) => ({ ...prev, [imageKey]: true }))
-  }
-
-  // Handle export voucher to png
-  const exportVoucher = async (voucher: CashVoucher) => {
-    saveTableState()
-    fetchSelectedVoucher(voucher.id)
-    try {
-      setIsExporting(true)
-
       const container = document.getElementById("voucher-export-container")!
       container.innerHTML = ""
       const div = document.createElement("div")
       container.appendChild(div)
 
       const previewRef = React.createRef<HTMLDivElement>()
-
-      // Render voucher preview
       const root = createRoot(div)
-      root.render(
-        <CashVoucherPreview
-          ref={previewRef}
-          voucher={selectedExportVoucher!}
-          getSignatureUrl={getSignatureUrl}
-          handleImageError={handleImageError}
-          formatDate={formatDate}
-          formatDateForPreview={formatDateForPreview}
-        />,
-      )
 
-      // Wait for React to render & images to load
-      await new Promise<void>((res) => requestAnimationFrame(() => res()))
+      root.render(<CashVoucherPreview ref={previewRef} voucher={data} />)
+
+      // Give React time to flush
+      await new Promise((res) => setTimeout(res, 200))
+
       const node = previewRef.current
       if (!node) throw new Error("Voucher preview failed to render")
 
@@ -357,7 +284,6 @@ export default function CashVoucherPage() {
       node.style.width = "1800px"
       node.style.maxWidth = "1800px"
 
-      // Export as PNG
       const dataUrl = await (domtoimage as any).toPng(node, {
         bgcolor: "#ffffff",
         width: 1800,
@@ -373,7 +299,6 @@ export default function CashVoucherPage() {
       link.href = dataUrl
       link.click()
 
-      // Clean up
       root.unmount()
       div.remove()
     } catch (error: any) {
@@ -701,16 +626,6 @@ export default function CashVoucherPage() {
       <div style={{ position: "absolute", left: -9999, top: -9999, pointerEvents: "none" }}>
         {/* Hidden VoucherPreview for export */}
         <div id="voucher-export-container" />
-        {selectedExportVoucher && (
-          <CashVoucherPreview
-            ref={previewRef}
-            voucher={selectedExportVoucher!}
-            getSignatureUrl={getSignatureUrl}
-            handleImageError={handleImageError}
-            formatDate={formatDate}
-            formatDateForPreview={formatDateForPreview}
-          />
-        )}
       </div>
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
