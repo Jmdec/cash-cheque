@@ -167,83 +167,83 @@ export default function CashVoucherEditPage() {
     }
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!id) return
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!id) return
 
-  setIsSaving(true)
-  setError(null)
+    setIsSaving(true)
+    setError(null)
 
-  const payload = new FormData()
-  
-  // Use the exact field names that the backend expects
-  payload.append("paidTo", formData.paid_to) // Backend expects camelCase
-  payload.append("voucherNo", formData.voucher_no)
-  payload.append("date", formData.date)
-  payload.append("purpose", formData.purpose)
-  payload.append("note", formData.note)
-  payload.append("projectDetails", formData.project_details)
-  payload.append("ownerClient", formData.owner_client)
-  payload.append("status", formData.status)
-  
-  // Send the amount as particular_amount at top level
-  payload.append("particular_amount", formData.total_amount.toString())
-  
-  // Received by fields - use nested structure as expected by flattenFormData
-  payload.append("receivedBy[name]", formData.received_by_name)
-  payload.append("receivedBy[date]", formData.received_by_date)
-  
-  // Approved by fields - use nested structure
-  payload.append("approvedBy[name]", formData.approved_by_name)
-  payload.append("approvedBy[date]", formData.approved_by_date)
+    const payload = new FormData()
 
-  // Handle file uploads with nested structure
-  if (formData.received_by_signature instanceof File) {
-    payload.append("receivedBy[signature]", formData.received_by_signature)
-  }
-  if (formData.approved_by_signature instanceof File) {
-    payload.append("approvedBy[signature]", formData.approved_by_signature)
-  }
+    // Use the exact field names that the backend expects
+    payload.append("paidTo", formData.paid_to) // Backend expects camelCase
+    payload.append("voucherNo", formData.voucher_no)
+    payload.append("date", formData.date)
+    payload.append("purpose", formData.purpose)
+    payload.append("note", formData.note)
+    payload.append("projectDetails", formData.project_details)
+    payload.append("ownerClient", formData.owner_client)
+    payload.append("status", formData.status)
 
-  // Handle signature clearing
-  if (formData.received_by_signature_cleared) {
-    payload.append("received_by_signature_cleared", "1")
-  }
-  if (formData.approved_by_signature_cleared) {
-    payload.append("approved_by_signature_cleared", "1")
-  }
+    // Send the amount as particular_amount at top level
+    payload.append("particular_amount", formData.total_amount.toString())
 
-  payload.append("_method", "PUT")
+    // Received by fields - use nested structure as expected by flattenFormData
+    payload.append("receivedBy[name]", formData.received_by_name)
+    payload.append("receivedBy[date]", formData.received_by_date)
 
-  try {
-    const response = await fetch(`/api/cash-vouchers/${id}`, {
-      method: "POST",
-      body: payload,
-    })
+    // Approved by fields - use nested structure
+    payload.append("approvedBy[name]", formData.approved_by_name)
+    payload.append("approvedBy[date]", formData.approved_by_date)
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error("Validation errors:", errorData) // Add this for debugging
-      throw new Error(errorData.message || JSON.stringify(errorData.errors) || "Failed to update cash voucher")
+    // Handle file uploads with nested structure
+    if (formData.received_by_signature instanceof File) {
+      payload.append("receivedBy[signature]", formData.received_by_signature)
+    }
+    if (formData.approved_by_signature instanceof File) {
+      payload.append("approvedBy[signature]", formData.approved_by_signature)
     }
 
-    toast({
-      title: "Success",
-      description: "Cash voucher updated successfully!",
-    })
-    router.push("/admin/cashvoucher")
-  } catch (err: any) {
-    console.error("Update error:", err) // Add this for debugging
-    setError(err.message)
-    toast({
-      title: "Error",
-      description: `Failed to update cash voucher: ${err.message}`,
-      variant: "destructive",
-    })
-  } finally {
-    setIsSaving(false)
+    // Handle signature clearing
+    if (formData.received_by_signature_cleared) {
+      payload.append("received_by_signature_cleared", "1")
+    }
+    if (formData.approved_by_signature_cleared) {
+      payload.append("approved_by_signature_cleared", "1")
+    }
+
+    payload.append("_method", "PUT")
+
+    try {
+      const response = await fetch(`/api/cash-vouchers/${id}`, {
+        method: "POST",
+        body: payload,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("Validation errors:", errorData) // Add this for debugging
+        throw new Error(errorData.message || JSON.stringify(errorData.errors) || "Failed to update cash voucher")
+      }
+
+      toast({
+        title: "Success",
+        description: "Cash voucher updated successfully!",
+      })
+      router.push("/admin/cashvoucher")
+    } catch (err: any) {
+      console.error("Update error:", err) // Add this for debugging
+      setError(err.message)
+      toast({
+        title: "Error",
+        description: `Failed to update cash voucher: ${err.message}`,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
-}
 
   if (isLoading) {
     return (
@@ -271,10 +271,10 @@ export default function CashVoucherEditPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="voucher_no">Voucher No</Label>
-            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required/>
+            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required readOnly />
           </div>
           <div>
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
             <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} required />
           </div>
           <div>
@@ -330,12 +330,7 @@ export default function CashVoucherEditPage() {
           </div>
           <div>
             <Label htmlFor="project_details">Project Details</Label>
-            <Input
-              id="project_details"
-              name="project_details"
-              value={formData.project_details}
-              onChange={handleChange}
-            />
+            <Input id="project_details" name="project_details" value={formData.project_details} onChange={handleChange} />
           </div>
           <div>
             <Label htmlFor="owner_client">Owner/Client</Label>
@@ -353,22 +348,11 @@ export default function CashVoucherEditPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="received_by_name">Name</Label>
-              <Input
-                id="received_by_name"
-                name="received_by_name"
-                value={formData.received_by_name}
-                onChange={handleChange}
-              />
+              <Input id="received_by_name" name="received_by_name" value={formData.received_by_name} onChange={handleChange} />
             </div>
             <div>
               <Label htmlFor="received_by_date">Date</Label>
-              <Input
-                id="received_by_date"
-                name="received_by_date"
-                type="date"
-                value={formData.received_by_date}
-                onChange={handleChange}
-              />
+              <Input id="received_by_date" name="received_by_date" type="date" value={formData.received_by_date} onChange={handleChange} />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="received_by_signature">Signature</Label>
@@ -383,12 +367,7 @@ export default function CashVoucherEditPage() {
                     className="border"
                     crossOrigin="anonymous"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleClearSignature("received_by_signature")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleClearSignature("received_by_signature")}>
                     Clear Signature
                   </Button>
                 </div>
@@ -402,22 +381,11 @@ export default function CashVoucherEditPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="approved_by_name">Name</Label>
-              <Input
-                id="approved_by_name"
-                name="approved_by_name"
-                value={formData.approved_by_name}
-                onChange={handleChange}
-              />
+              <Input id="approved_by_name" name="approved_by_name" value={formData.approved_by_name} onChange={handleChange} />
             </div>
             <div>
               <Label htmlFor="approved_by_date">Date</Label>
-              <Input
-                id="approved_by_date"
-                name="approved_by_date"
-                type="date"
-                value={formData.approved_by_date}
-                onChange={handleChange}
-              />
+              <Input id="approved_by_date" name="approved_by_date" type="date" value={formData.approved_by_date} onChange={handleChange} />
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="approved_by_signature">Signature</Label>
@@ -432,12 +400,7 @@ export default function CashVoucherEditPage() {
                     className="border"
                     crossOrigin="anonymous"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleClearSignature("approved_by_signature")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleClearSignature("approved_by_signature")}>
                     Clear Signature
                   </Button>
                 </div>

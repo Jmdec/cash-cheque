@@ -283,16 +283,10 @@ export default function ChequeVoucherEditPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="voucher_no">Voucher No</Label>
-            <AutocompleteInput
-              value={formData.voucher_no}
-              onChange={(val) => setFormData({ ...formData, voucher_no: val })}
-              type="voucher_no"
-              voucher="cheque"
-              required={true}
-            />
+            <Input id="voucher_no" name="voucher_no" value={formData.voucher_no} onChange={handleChange} required readOnly />
           </div>
           <div>
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
             <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} required />
           </div>
           <div>
@@ -342,17 +336,16 @@ export default function ChequeVoucherEditPage() {
           </div>
           <div>
             <Label htmlFor="check_no">Check No</Label>
-             <AutocompleteInput
+            <AutocompleteInput
               value={formData.check_no}
               onChange={(val) => setFormData({ ...formData, check_no: val })}
               type="check_no"
               voucher="cheque"
-              
             />
           </div>
           <div>
             <Label htmlFor="account_name">Account Name</Label>
-             <AutocompleteInput
+            <AutocompleteInput
               value={formData.account_name}
               onChange={(val) => setFormData({ ...formData, account_name: val })}
               type="account_name"

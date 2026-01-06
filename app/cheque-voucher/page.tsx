@@ -856,18 +856,18 @@ export default function ChequeVoucher() {
               <span className="font-bold mr-2 text-xl" style={{ flexShrink: 0 }}>
                 :
               </span>
-              <div className="border-b border-black text-xl" style={{ width: "400px" }}>
+              <div className="border-b border-black text-xl self-end" style={{ width: "400px" }}>
                 {formData.projectDetails}
               </div>
             </div>
 
             {/* OWNER/CLIENT */}
             <div className="flex items-center mb-2">
-              <span className="font-bold text-sm" style={{ width: "200px", flexShrink: 0 }}>
+              <span className="font-bold text-base" style={{ width: "200px", flexShrink: 0 }}>
                 OWNER/CLIENT
               </span>
               <span className="font-semibold mr-2 text-xl">:</span>
-              <div className="border-b border-black text-xl" style={{ width: "400px" }}>
+              <div className="border-b border-black text-xl self-end" style={{ width: "400px" }}>
                 {formData.ownerClient}
               </div>
             </div>

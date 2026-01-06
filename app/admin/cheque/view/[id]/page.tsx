@@ -48,20 +48,7 @@ const formatDateForPreview = (dateString: string) => {
   if (!dateString) return ""
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return ""
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
   const day = date.getDate()
   const month = months[date.getMonth()]
   const year = date.getFullYear()
@@ -221,12 +208,7 @@ export default function ChequeVoucherViewPage() {
       </div>
 
       <div className="mb-4 flex justify-end w-full">
-        <Button
-          onClick={exportAsImage}
-          variant="outline"
-          className="flex items-center gap-2 bg-transparent"
-          disabled={isSaving}
-        >
+        <Button onClick={exportAsImage} variant="outline" className="flex items-center gap-2 bg-transparent" disabled={isSaving}>
           <Download className="h-4 w-4" />
           {isSaving ? "Exporting..." : "Export as Image"}
         </Button>
@@ -234,15 +216,7 @@ export default function ChequeVoucherViewPage() {
 
       {/* Full Width Preview Section */}
       <Card className="w-full border rounded-lg bg-white shadow-sm">
-        <ChequeVoucherPreview
-          ref={previewRef}
-          voucher={voucher}
-          getSignatureUrl={getSignatureUrl}
-          handleImageError={handleImageError}
-          formatDate={formatDate}
-          formatDateForPreview={formatDateForPreview}
-        />
-       
+        <ChequeVoucherPreview ref={previewRef} voucher={voucher} />
       </Card>
     </div>
   )

@@ -32,7 +32,7 @@ interface VoucherPreviewProps {
 
 export const CashVoucherPreview = forwardRef<HTMLDivElement, VoucherPreviewProps>(({ voucher }, ref) => {
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
-  
+
   const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
   const getSignatureUrl = (relativePath: string | null) => {
     if (!relativePath) {

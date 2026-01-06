@@ -220,13 +220,7 @@ export default function CashVoucherViewPage() {
       {/* Full Width Preview Section */}
       <Card className="w-full border rounded-lg bg-white shadow-sm">
         <div ref={previewRef}>
-          <CashVoucherPreview
-            voucher={voucher}
-            getSignatureUrl={getSignatureUrl}
-            handleImageError={handleImageError}
-            formatDate={formatDate}
-            formatDateForPreview={formatDateForPreview}
-          />
+          <CashVoucherPreview voucher={voucher} />
         </div>
       </Card>
     </div>

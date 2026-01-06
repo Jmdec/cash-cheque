@@ -699,7 +699,7 @@ export default function CashVoucher() {
                 PROJECT DETAILS
               </span>
               <span className="font-bold text-xl mr-2">:</span>
-              <div className="border-b border-black text-xl truncate" style={{ width: "400px", whiteSpace: "nowrap" }}>
+              <div className="border-b border-black text-xl truncate self-end" style={{ width: "400px", whiteSpace: "nowrap" }}>
                 {formData.projectDetails}
               </div>
             </div>
@@ -710,7 +710,7 @@ export default function CashVoucher() {
                 OWNER/CLIENT
               </span>
               <span className="font-semibold mr-2 text-xl">:</span>
-              <div className="border-b border-black text-xl" style={{ width: "400px" }}>
+              <div className="border-b border-black text-xl self-end" style={{ width: "400px" }}>
                 {formData.ownerClient}
               </div>
             </div>

@@ -224,7 +224,7 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
                 <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                   :
                 </span>
-                <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                   {formatDateForPreview(voucher.check_date || "")}
                 </span>
               </div>
@@ -235,7 +235,7 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
                 <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                   :
                 </span>
-                <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                   {voucher.check_no}
                 </span>
               </div>
@@ -247,7 +247,7 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
                   :
                 </span>
                 <span
-                  className="border-b border-black pb-1 text-xl"
+                  className="border-b border-black pb-1 text-xl self-end"
                   style={{
                     overflow: "hidden",
                     width: "400px",
@@ -266,7 +266,7 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
                   :
                 </span>
                 <span
-                  className="border-b border-black pb-1 text-xl"
+                  className="border-b border-black pb-1 text-xl self-end"
                   style={{
                     overflow: "hidden",
                     width: "400px",
@@ -284,7 +284,7 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
                 <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                   :
                 </span>
-                <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                   {voucher.amount
                     ? `₱${Number(voucher.amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -322,17 +322,17 @@ export const ChequeVoucherPreview = forwardRef<HTMLDivElement, Props>(({ voucher
           <span className="font-bold mr-2 text-xl" style={{ flexShrink: 0 }}>
             :
           </span>
-          <div className="border-b border-black text-xl" style={{ width: "400px" }}>
+          <div className="border-b border-black text-xl self-end" style={{ width: "400px" }}>
             {voucher.project_details}
           </div>
         </div>
         {/* OWNER/CLIENT */}
         <div className="flex items-center mb-2">
-          <span className="font-bold text-sm" style={{ width: "200px", flexShrink: 0 }}>
+          <span className="font-bold text-base" style={{ width: "200px", flexShrink: 0 }}>
             OWNER/CLIENT
           </span>
           <span className="font-semibold mr-2 text-xl">:</span>
-          <div className="border-b border-black text-xl" style={{ width: "400px" }}>
+          <div className="border-b border-black text-xl self-end" style={{ width: "400px" }}>
             {voucher.owner_client}
           </div>
         </div>
