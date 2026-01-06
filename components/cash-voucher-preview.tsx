@@ -63,13 +63,12 @@ export const CashVoucherPreview = forwardRef<HTMLDivElement, VoucherPreviewProps
   }
 
   // Helper function to format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "" // null, undefined, or empty string
     const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    })
+    if (isNaN(date.getTime()) || date.getTime() === 0) return "" // invalid or epoch
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
   }
 
   // Helper function to format date consistently for preview to avoid hydration issues

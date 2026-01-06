@@ -165,7 +165,7 @@ export default function CashVoucherPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchVouchers(currentPage, globalSearchQuery)
-    }, 300) // 300ms debounce
+    }, 1000) // 1000ms debounce
     return () => {
       clearTimeout(handler)
     }

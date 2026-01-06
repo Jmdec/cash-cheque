@@ -327,7 +327,7 @@ export default function ChequeVoucher() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col space-y-2">
-        <h1 className="text-5xl font-bold tracking-tight text-slate-900">Cheque Voucher</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Cheque Voucher</h1>
         <p className="text-slate-500">Create and manage cheque vouchers with live preview.</p>
       </div>
 
@@ -757,7 +757,7 @@ export default function ChequeVoucher() {
                     <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                       :
                     </span>
-                    <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                    <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                       {formatDate(formData.checkDate)}
                     </span>
                   </div>
@@ -768,7 +768,7 @@ export default function ChequeVoucher() {
                     <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                       :
                     </span>
-                    <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                    <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                       {formData.checkNo}
                     </span>
                   </div>
@@ -780,7 +780,7 @@ export default function ChequeVoucher() {
                       :
                     </span>
                     <span
-                      className="border-b border-black pb-1 text-xl"
+                      className="border-b border-black pb-1 text-xl self-end"
                       style={{
                         overflow: "hidden",
                         width: "400px",
@@ -799,7 +799,7 @@ export default function ChequeVoucher() {
                       :
                     </span>
                     <span
-                      className="border-b border-black pb-1 text-xl"
+                      className="border-b border-black pb-1 text-xl self-end"
                       style={{
                         overflow: "hidden",
                         width: "400px",
@@ -817,7 +817,7 @@ export default function ChequeVoucher() {
                     <span className="font-semibold mr-2 text-xl" style={{ flexShrink: 0 }}>
                       :
                     </span>
-                    <span className="border-b border-black pb-1 text-xl" style={{ overflow: "hidden", width: "400px" }}>
+                    <span className="border-b border-black pb-1 text-xl self-end" style={{ overflow: "hidden", width: "400px" }}>
                       {formData.amount
                         ? `₱${Number(formData.amount).toLocaleString(undefined, {
                             minimumFractionDigits: 2,

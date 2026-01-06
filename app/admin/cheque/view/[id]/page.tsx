@@ -32,29 +32,6 @@ interface ChequeVoucher {
   status: string
 }
 
-// Helper function to format date
-const formatDate = (dateString: string) => {
-  if (!dateString) return ""
-  const date = new Date(dateString)
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
-// Helper function to format date consistently for preview to avoid hydration issues
-const formatDateForPreview = (dateString: string) => {
-  if (!dateString) return ""
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return ""
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-  const day = date.getDate()
-  const month = months[date.getMonth()]
-  const year = date.getFullYear()
-  return `${month} ${day}, ${year}`
-}
-
 export default function ChequeVoucherViewPage() {
   const { id } = useParams()
   const { toast } = useToast()
@@ -62,11 +39,7 @@ export default function ChequeVoucherViewPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({})
   const previewRef = useRef<HTMLDivElement>(null)
-
-  // Get the Laravel API URL from environment variables
-  const LARAVEL_API_URL = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
     if (id) {
@@ -95,40 +68,6 @@ export default function ChequeVoucherViewPage() {
       fetchVoucher()
     }
   }, [id, toast])
-
-  // Helper function to get full signature URL with better error handling
-  const getSignatureUrl = (relativePath: string | null) => {
-    if (!relativePath) {
-      return "/placeholder.svg?height=60&width=120&text=No+Signature"
-    }
-
-    if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
-      if (LARAVEL_API_URL) {
-        return `/api/proxy-image?url=${encodeURIComponent(relativePath)}`
-      } else {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-    }
-
-    if (relativePath.startsWith("/signatures/")) {
-      if (!LARAVEL_API_URL) {
-        return "/placeholder.svg?height=60&width=120&text=No+API+URL"
-      }
-      let baseUrl = LARAVEL_API_URL.replace(/\/+$/, "")
-      if (baseUrl.endsWith("/api")) {
-        baseUrl = baseUrl.slice(0, -4)
-      }
-      const fullLaravelUrl = `${baseUrl}${relativePath}`
-      return `/api/proxy-image?url=${encodeURIComponent(fullLaravelUrl)}`
-    }
-
-    return "/placeholder.svg?height=60&width=120&text=Invalid+Path"
-  }
-
-  // Handle image load errors
-  const handleImageError = (imageKey: string) => {
-    setImageErrors((prev) => ({ ...prev, [imageKey]: true }))
-  }
 
   // Function to export the voucher as an image using dom-to-image
   const exportAsImage = async () => {
@@ -177,11 +116,6 @@ export default function ChequeVoucherViewPage() {
     } finally {
       setIsSaving(false)
     }
-  }
-
-  const calculateTotal = () => {
-    const amount = voucher?.amount || 0
-    return Number(amount).toFixed(2)
   }
 
   if (isLoading) {
